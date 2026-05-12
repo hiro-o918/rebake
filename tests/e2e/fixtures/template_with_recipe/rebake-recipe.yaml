@@ -1,0 +1,5 @@
+hooks:
+  pre-update:
+    - 'echo "template pre-update: $REBAKE_NEW_COMMIT" > "$REBAKE_PROJECT_DIR/template_pre.log"'
+  post-update:
+    - 'echo "template post-update: $REBAKE_GIT_ROOT" > "$REBAKE_PROJECT_DIR/template_post.log"'
