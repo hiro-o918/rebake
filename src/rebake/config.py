@@ -19,6 +19,8 @@ class CruftConfig:
     checkout: str | None = None
     skip: list[str] = field(default_factory=list)
     hooks: dict[str, list[str]] = field(default_factory=dict)
+    # Managed by rebake from the template's rebake-recipe.yaml; refreshed on update.
+    template_hooks: dict[str, list[str]] = field(default_factory=dict)
 
     @classmethod
     def load(cls, project_dir: Path = Path(".")) -> "CruftConfig":
@@ -39,6 +41,7 @@ class CruftConfig:
             checkout=data.get("checkout"),
             skip=data.get("skip", []),
             hooks=data.get("hooks", {}),
+            template_hooks=data.get("template_hooks", {}),
         )
 
     def save(self, project_dir: Path = Path(".")) -> None:
@@ -51,6 +54,8 @@ class CruftConfig:
             data["checkout"] = self.checkout
         if self.skip:
             data["skip"] = self.skip
+        if self.template_hooks:
+            data["template_hooks"] = self.template_hooks
         if self.hooks:
             data["hooks"] = self.hooks
 

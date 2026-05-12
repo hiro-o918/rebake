@@ -198,3 +198,76 @@ def test_save_omits_empty_hooks(tmp_path):
 
     raw = yaml.safe_load((tmp_path / "rebake.yaml").read_text())
     assert "hooks" not in raw
+
+
+def test_load_with_template_hooks_from_rebake_yaml(tmp_path):
+    data = {
+        "template": "https://github.com/owner/template",
+        "commit": "abc123",
+        "context": {"cookiecutter": {}},
+        "template_hooks": {
+            "pre-update": ["echo template pre"],
+            "post-update": ["echo template post"],
+        },
+    }
+    (tmp_path / "rebake.yaml").write_text(yaml.dump(data, allow_unicode=True))
+
+    config = CruftConfig.load(tmp_path)
+
+    assert config.template_hooks == {
+        "pre-update": ["echo template pre"],
+        "post-update": ["echo template post"],
+    }
+
+
+def test_load_template_hooks_defaults_to_empty(tmp_path):
+    data = {
+        "template": "https://github.com/owner/template",
+        "commit": "abc123",
+        "context": {"cookiecutter": {}},
+    }
+    (tmp_path / "rebake.yaml").write_text(yaml.dump(data, allow_unicode=True))
+
+    config = CruftConfig.load(tmp_path)
+
+    assert config.template_hooks == {}
+
+
+def test_save_and_reload_with_template_hooks(tmp_path):
+    config = CruftConfig(
+        template="https://github.com/owner/template",
+        commit="abc123",
+        context={"cookiecutter": {}},
+        template_hooks={"post-update": ["echo from template"]},
+    )
+    config.save(tmp_path)
+
+    loaded = CruftConfig.load(tmp_path)
+    assert loaded.template_hooks == {"post-update": ["echo from template"]}
+
+
+def test_save_omits_empty_template_hooks(tmp_path):
+    config = CruftConfig(
+        template="https://github.com/owner/template",
+        commit="abc123",
+        context={"cookiecutter": {}},
+    )
+    config.save(tmp_path)
+
+    raw = yaml.safe_load((tmp_path / "rebake.yaml").read_text())
+    assert "template_hooks" not in raw
+
+
+def test_save_template_hooks_before_user_hooks(tmp_path):
+    """template_hooks should appear before hooks in the serialized YAML."""
+    config = CruftConfig(
+        template="https://github.com/owner/template",
+        commit="abc123",
+        context={"cookiecutter": {}},
+        hooks={"post-update": ["user cmd"]},
+        template_hooks={"post-update": ["template cmd"]},
+    )
+    config.save(tmp_path)
+
+    raw_text = (tmp_path / "rebake.yaml").read_text()
+    assert raw_text.index("template_hooks") < raw_text.index("\nhooks:")
